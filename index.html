@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>굿즈 룰렛</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #fff;
+      color: #222;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      margin-top: 40px;
+      font-size: 36px;
+      color: #26B5D7;
+    }
+
+    #roulette-container {
+      position: relative;
+      width: 400px;
+      margin: 40px auto 10px;
+    }
+
+    canvas {
+        background: #fff;
+  border: 8px solid #26B5D7;
+  border-radius: 50%;
+    }
+
+    #pointer {
+        border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-top: 30px solid #26B5D7; /* 아래를 향함 */
+  position: absolute;
+  top: -30px;
+  left: 52%;
+  transform: translateX(-50%);
+  z-index: 2;
+    }
+
+    #spin {
+      margin-top: 40px;
+      padding: 14px 30px;
+      font-size: 18px;
+      background: #26B5D7;
+      color: #fff;
+      border: none;
+      border-radius: 40px;
+      box-shadow: 0 6px 15px rgba(38, 181, 215, 0.3);
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    #spin:hover {
+      background: #1ca3c2;
+    }
+
+    #result {
+      margin-top: 30px;
+      font-size: 22px;
+      color: #212121;
+    }
+  </style>
+</head>
+<body>
+  <h1>게임즈 굿즈 룰렛</h1>
+  <div id="roulette-container">
+    <canvas id="wheel" width="400" height="400"></canvas>
+    <div id="pointer"></div>
+  </div>
+  <button id="spin">돌리기</button>
+  <div id="result"></div>
+
+  <script>
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    const spinBtn = document.getElementById("spin");
+    const resultDiv = document.getElementById("result");
+    let angle = 0;
+    let isSpinning = false;
+
+    let goods = [
+      { name: "게임즈 세트", count: 2 },
+      { name: "마우스 패드", count: 4 },
+      { name: "판스티커", count: 6 },
+      { name: "간식 꾸러미", count: 50 },
+      { name: "게임즈 로고", count: 138 }
+    ];
+
+    const colors = [  "#A0D8EF", "#B8E1DD",  "#D3C0F9", "#FFE9B1", "#FFCCCC", "#F0F0F0"];
+
+    function groupGoods(goodsList) {
+      const map = new Map();
+      for (const g of goodsList) {
+        map.set(g.name, (map.get(g.name) || 0) + g.count);
+      } 
+      return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
+    }
+
+    function drawWheel(grouped) {
+      const total = grouped.reduce((sum, g) => sum + g.count, 0);
+      let startAngle = angle;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < grouped.length; i++) {
+        const g = grouped[i];
+        const sliceAngle = 2 * Math.PI * g.count / total;
+
+        ctx.beginPath();
+        ctx.moveTo(200, 200);
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.arc(200, 200, 190, startAngle, startAngle + sliceAngle);
+        ctx.fill();
+
+        // 텍스트
+        ctx.save();
+        ctx.translate(200, 200);
+        ctx.rotate(startAngle + sliceAngle / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 16px Noto Sans KR";
+        ctx.fillText(`${g.name} (${g.count})`, 160, 10);
+        ctx.restore();
+
+        startAngle += sliceAngle;
+      }
+    }
+
+    function spinWheel() {
+      if (isSpinning) return;
+      const grouped = groupGoods(goods);
+      const total = grouped.reduce((sum, g) => sum + g.count, 0);
+      if (total === 0) {
+        resultDiv.textContent = "🎉 모든 굿즈 소진!";
+        return;
+      }
+
+      isSpinning = true;
+
+      const rand = Math.random() * total;
+      let acc = 0;
+      let selectedIndex = 0;
+
+      for (let i = 0; i < grouped.length; i++) {
+        acc += grouped[i].count;
+        if (rand < acc) {
+          selectedIndex = i;
+          break;
+        }
+      }
+
+      const sliceAngle = 2 * Math.PI * grouped[selectedIndex].count / total;
+      const midAngle = grouped.slice(0, selectedIndex).reduce((sum, g) => sum + 2 * Math.PI * g.count / total, 0) + sliceAngle / 2;
+
+      const targetAngle = (3 * Math.PI / 2) - midAngle;
+      const fullRotations = 5 * 2 * Math.PI;
+      const finalAngle = fullRotations + targetAngle;
+
+      let start = null;
+      const duration = 3000;
+
+      function animate(timestamp) {
+        if (!start) start = timestamp;
+        const elapsed = timestamp - start;
+        const progress = Math.min(elapsed / duration, 1);
+        angle = finalAngle * easeOutCubic(progress);
+        drawWheel(grouped);
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          const winnerName = grouped[selectedIndex].name;
+          resultDiv.textContent = `당첨: ${winnerName}`;
+
+          for (let g of goods) {
+            if (g.name === winnerName && g.count > 0) {
+              g.count--;
+              break;
+            }
+          }
+
+          goods = goods.filter(g => g.count > 0);
+          isSpinning = false;
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function easeOutCubic(t) {
+      return (--t) * t * t + 1;
+    }
+
+    drawWheel(groupGoods(goods));
+    spinBtn.addEventListener("click", spinWheel);
+  </script>
+</body>
+</html>
