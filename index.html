@@ -2,204 +2,321 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>굿즈 룰렛</title>
   <link rel="icon" href="게임즈 창업동아리 로고.png"/> 
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700&display=swap" rel="stylesheet">
+  <title>선물 상자</title>
   <style>
-    body {
-      font-family: 'Noto Sans KR', sans-serif;
-      background: #fff;
-      color: #222;
-      text-align: center;
+    * {
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
     }
 
-    h1 {
-      margin-top: 40px;
-      font-size: 36px;
-      color: #26B5D7;
-    }
-
-    #roulette-container {
+    body {
+      background: #fff;
+      height: 100vh;
+      overflow: hidden;
       position: relative;
-      width: 400px;
-      margin: 40px auto 10px;
     }
 
-    canvas {
-        background: #fff;
-  border: 8px solid #26B5D7;
-  border-radius: 50%;
-    }
-
-    #pointer {
-        border-left: 20px solid transparent;
-  border-right: 20px solid transparent;
-  border-top: 30px solid #26B5D7; /* 아래를 향함 */
-  position: absolute;
-  top: -30px;
-  left: 52%;
-  transform: translateX(-50%);
-  z-index: 2;
-    }
-
-    #spin {
-      margin-top: 40px;
-      padding: 14px 30px;
-      font-size: 18px;
-      background: #26B5D7;
-      color: #fff;
-      border: none;
-      border-radius: 40px;
-      box-shadow: 0 6px 15px rgba(38, 181, 215, 0.3);
+    .box-container {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: clamp(280px, 40vw, 600px); 
+      height: auto;
       cursor: pointer;
-      transition: background 0.3s ease;
     }
 
-    #spin:hover {
-      background: #1ca3c2;
+    .box-bottom {
+      width: 100%;
+      height: auto;
+      background-image: url('present_box_bottom.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: bottom center;
+      aspect-ratio: 1/1;
     }
 
-    #result {
-      margin-top: 30px;
-      font-size: 22px;
-      color: #212121;
+    .box-top {
+      position: absolute;
+      width: 100%;
+      height: auto;
+      background-image: url('present_box_top.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: top center;
+      aspect-ratio: 1.2 / 1;
+      top: 0;
+      transition: top 0.5s ease;
+      z-index: 2;
     }
+
+    .label {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+  width: clamp(250px, 60vw, 750px);
+  height: clamp(60px, 15vw, 180px);
+  font-size: clamp(16px, 4vw, 48px);
+      background-image: url('label.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      font-weight: bold;
+      color: white;
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition:
+        top 0.6s ease,
+        opacity 0.6s ease,
+        transform 0.6s ease;
+    }
+
+    .open .label {
+      top: 25%;
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .box-container:hover:not(.open) {
+      animation: shake 0.8s infinite;
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(-50%) translateY(0); }
+      25% { transform: translateX(calc(-50% - 6px)) translateY(0); }
+      50% { transform: translateX(calc(-50% + 6px)) translateY(0); }
+      75% { transform: translateX(calc(-50% - 6px)) translateY(0); }
+      100% { transform: translateX(-50%) translateY(0); }
+    }
+
+    .open .box-top {
+      top: -340px;
+    }
+
+    .controls {
+      position: fixed;
+      bottom: 5vw;
+      right: 5vw;
+      display: flex;
+      gap: 2vw;
+      z-index: 10000;
+    }
+
+    .controls button {
+        padding: 1vw 2vw;
+        font-size: clamp(12px, 2vw, 18px);
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      background-color: #00aacc;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.2s ease;
+    }
+
+    .controls button:hover {
+      background-color: #0088aa;
+    }
+
+    .end-message {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.85);
+      color: white;
+      font-size: 48px;
+      font-weight: bold;
+      justify-content: center;
+      align-items: center;
+      z-index: 100000;
+      text-align: center;
+    }
+
+    .particles {
+  position: absolute;
+  bottom: 240px;
+  width: 200px;
+  height: 250px;
+  pointer-events: none;
+  z-index: 10;
+  overflow: visible;
+}
+
+.particles.left {
+  left: 13vw;
+}
+
+.particles.right {
+  right: 5vw;
+}
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 10px;
+  background: red;
+  border-radius: 1px;
+  opacity: 0;
+  animation: explode 1.2s ease-out forwards;
+}
+
+@keyframes explode {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--x), var(--y)) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+
+
   </style>
 </head>
 <body>
-  <h1>게임즈 굿즈 룰렛</h1>
-  <div id="roulette-container">
-    <canvas id="wheel" width="400" height="400"></canvas>
-    <div id="pointer"></div>
+
+  <div class="box-container">
+    <div class="box-top"></div>
+    <div class="box-bottom"></div>
+    <div class="label">마우스 패드</div>
   </div>
-  <button id="spin">돌리기</button>
-  <div id="result"></div>
 
-  <script>
-    const canvas = document.getElementById("wheel");
-    const ctx = canvas.getContext("2d");
-    const spinBtn = document.getElementById("spin");
-    const resultDiv = document.getElementById("result");
-    let angle = 0;
-    let isSpinning = false;
+<!-- 상자 아래에 추가 -->
+<div class="particles left"></div>
+<div class="particles right"></div>
 
-    let goods = [
-      { name: "게임즈 세트", count: 2 },
-      { name: "마우스 패드", count: 4 },
-      { name: "판스티커", count: 6 },
-      { name: "간식 꾸러미", count: 50 },
-      { name: "게임즈 로고", count: 138 }
-    ];
 
-    const colors = [  "#A0D8EF", "#B8E1DD",  "#D3C0F9", "#FFE9B1", "#FFCCCC", "#F0F0F0"];
+  <div class="controls">
+    <button id="closeBtn">닫기</button>
+    <button id="resetBtn">초기화</button>
+  </div>
 
-    function groupGoods(goodsList) {
-      const map = new Map();
-      for (const g of goodsList) {
-        map.set(g.name, (map.get(g.name) || 0) + g.count);
-      } 
-      return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
+  <div id="endMessage" class="end-message">
+    오늘의 뽑기가 종료되었습니다.
+  </div>
+
+  <script>const defaultGoods = [
+    { name: "게임즈 세트", count: 4 },
+    { name: "마우스 패드", count: 6 },
+    { name: "판스티커", count: 50 },
+    { name: "간식꾸러미", count: 70 },
+    { name: "게임즈 스티커", count: 70 }
+  ];
+  
+  let goodsPool = JSON.parse(localStorage.getItem("goodsPool")) || structuredClone(defaultGoods);
+  let drawEnded = checkIfAllDepleted(goodsPool);
+  
+  function openBox(element) {
+    if (drawEnded || element.classList.contains("open")) return;
+  
+    element.classList.add('open');
+    element.style.animation = 'none';
+    triggerParticles();
+  
+    const label = element.querySelector('.label');
+    const selected = drawGood();
+  
+    if (selected) {
+      label.textContent = selected.name;
+    } else {
+      document.getElementById('endMessage').style.display = 'flex';
+      drawEnded = true;
     }
+  }
 
-    function drawWheel(grouped) {
-      const total = grouped.reduce((sum, g) => sum + g.count, 0);
-      let startAngle = angle;
+  function triggerParticles() {
+  const colors = ['#ff4d4d', '#4da6ff', '#4dff4d', '#ffff4d', '#ff80ff'];
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const createParticles = (container) => {
+    container.innerHTML = ''; // 초기화
+    for (let i = 0; i < 50; i++) {
+      const p = document.createElement('span');
+      p.classList.add('particle');
 
-      for (let i = 0; i < grouped.length; i++) {
-        const g = grouped[i];
-        const sliceAngle = 2 * Math.PI * g.count / total;
+      // 위치 랜덤
+      const angle = Math.random() * Math.PI * 2;
+      const distance = Math.random() * 200 + 50; // 더 넓게 퍼짐
+      const x = Math.cos(angle) * distance + 'px';
+      const y = Math.sin(angle) * distance + 'px';
 
-        ctx.beginPath();
-        ctx.moveTo(200, 200);
-        ctx.fillStyle = colors[i % colors.length];
-        ctx.arc(200, 200, 190, startAngle, startAngle + sliceAngle);
-        ctx.fill();
+      // 색상 랜덤
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      p.style.backgroundColor = color;
 
-        // 텍스트
-        ctx.save();
-        ctx.translate(200, 200);
-        ctx.rotate(startAngle + sliceAngle / 2);
-        ctx.textAlign = "right";
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 16px Noto Sans KR";
-        ctx.fillText(`${g.name} (${g.count})`, 160, 10);
-        ctx.restore();
+      p.style.setProperty('--x', x);
+      p.style.setProperty('--y', y);
 
-        startAngle += sliceAngle;
-      }
+      container.appendChild(p);
     }
+  };
 
-    function spinWheel() {
-      if (isSpinning) return;
-      const grouped = groupGoods(goods);
-      const total = grouped.reduce((sum, g) => sum + g.count, 0);
-      if (total === 0) {
-        resultDiv.textContent = "🎉 모든 굿즈 소진!";
-        return;
+  createParticles(document.querySelector('.particles.left'));
+  createParticles(document.querySelector('.particles.right'));
+}
+
+
+
+  
+  function drawGood() {
+    let available = goodsPool.filter(g => g.count > 0);
+    if (available.length === 0) return null;
+  
+    let weighted = [];
+    available.forEach(item => {
+      for (let i = 0; i < item.count; i++) {
+        weighted.push(item);
       }
-
-      isSpinning = true;
-
-      const rand = Math.random() * total;
-      let acc = 0;
-      let selectedIndex = 0;
-
-      for (let i = 0; i < grouped.length; i++) {
-        acc += grouped[i].count;
-        if (rand < acc) {
-          selectedIndex = i;
-          break;
-        }
-      }
-
-      const sliceAngle = 2 * Math.PI * grouped[selectedIndex].count / total;
-      const midAngle = grouped.slice(0, selectedIndex).reduce((sum, g) => sum + 2 * Math.PI * g.count / total, 0) + sliceAngle / 2;
-
-      const targetAngle = (3 * Math.PI / 2) - midAngle;
-      const fullRotations = 5 * 2 * Math.PI;
-      const finalAngle = fullRotations + targetAngle;
-
-      let start = null;
-      const duration = 3000;
-
-      function animate(timestamp) {
-        if (!start) start = timestamp;
-        const elapsed = timestamp - start;
-        const progress = Math.min(elapsed / duration, 1);
-        angle = finalAngle * easeOutCubic(progress);
-        drawWheel(grouped);
-
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        } else {
-          const winnerName = grouped[selectedIndex].name;
-          resultDiv.textContent = `당첨: ${winnerName}`;
-
-          for (let g of goods) {
-            if (g.name === winnerName && g.count > 0) {
-              g.count--;
-              break;
-            }
-          }
-
-          goods = goods.filter(g => g.count > 0);
-          isSpinning = false;
-        }
-      }
-
-      requestAnimationFrame(animate);
+    });
+  
+    const selected = weighted[Math.floor(Math.random() * weighted.length)];
+    selected.count--;
+  
+    localStorage.setItem("goodsPool", JSON.stringify(goodsPool));
+    return selected;
+  }
+  
+  function checkIfAllDepleted(pool) {
+    return pool.every(g => g.count <= 0);
+  }
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    const box = document.querySelector('.box-container');
+    box.addEventListener('click', function () {
+      openBox(this);
+    });
+  
+    if (drawEnded) {
+      document.getElementById('endMessage').style.display = 'flex';
     }
-
-    function easeOutCubic(t) {
-      return (--t) * t * t + 1;
+  });
+  
+  document.getElementById('closeBtn').addEventListener('click', () => {
+    if (drawEnded) return;
+    const box = document.querySelector('.box-container');
+    box.classList.remove('open');
+    box.style.animation = '';
+  });
+  
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    if (confirm("굿즈 재고를 초기화하시겠습니까?")) {
+      localStorage.removeItem("goodsPool");
+      location.reload();
     }
-
-    drawWheel(groupGoods(goods));
-    spinBtn.addEventListener("click", spinWheel);
+  });
+  
   </script>
 </body>
 </html>
