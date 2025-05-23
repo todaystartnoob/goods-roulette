@@ -188,12 +188,30 @@
     opacity: 0;
   }
 }
+.price{
+  position: absolute;
+  font-size: clamp(16px, 4vw, 48px);
+  font-weight: bold;
+  margin: 20px 0 0 20px;
+  padding: 20px;
+  color:white;
+  background-color: #44CAEA;
+  border-radius: 15px;
+  transition: all 0.5s;
+}
+.price:hover{
+  transform: scale(1.1);
+}
 
 
 
   </style>
 </head>
 <body>
+
+  <div class="price">1회 뽑기 <span style="font-weight: bold;">1000원</span><br>
+    5회 뽑기 <span style="font-weight: bold;">4000원</span> <br>
+  </div>
 
   <div class="box-container">
     <div class="box-top"></div>
